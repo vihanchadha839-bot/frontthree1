@@ -1,0 +1,42 @@
+name: Build player data
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'ball-knowledge/build_db.py'
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pandas numpy
+      - name: Download Transfermarkt data
+        run: |
+          mkdir -p /tmp/raw && cd /tmp/raw
+          R=https://raw.githubusercontent.com/salimt/football-datasets/main/datalake/transfermarkt
+          M=https://media.githubusercontent.com/media/salimt/football-datasets/main/datalake/transfermarkt
+          curl -fsSL -o player_profiles.csv $R/player_profiles/player_profiles.csv
+          curl -fsSL -o mv.csv $R/player_market_value/player_market_value.csv
+          curl -fsSL -o teams.csv $R/team_details/team_details.csv
+          curl -fsSL -o nat.csv $R/player_national_performances/player_national_performances.csv
+          curl -fsSL -o player_performances.csv $M/player_performances/player_performances.csv
+          curl -fsSL -o transfers.csv $M/transfer_history/transfer_history.csv
+          ls -la
+      - name: Build players.json.gz
+        run: |
+          python ball-knowledge/build_db.py /tmp/raw /tmp/players.json
+          gzip -9 -c /tmp/players.json > ball-knowledge/players.json.gz
+          git rm -f --ignore-unmatch ball-knowledge/players.json
+          ls -la ball-knowledge
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add ball-knowledge/players.json.gz
+          git commit -m "Build player data" || echo "nothing to commit"
+          git push
