@@ -1,0 +1,9 @@
+{
+  "name": "ball-knowledge",
+  "version": "1.0.0",
+  "description": "Front Three style football party games: Imposter, Investment, Battleship, Alphabet, Who Am I, Jeopardy, The Chase, Trivia Path",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" },
+  "dependencies": { "express": "^4.21.2", "socket.io": "^4.8.1" }
+}
